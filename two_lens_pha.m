@@ -5,12 +5,23 @@ M=512;
 N=512;
 d1=(10*10^-3)/M;
 z=0.02;
-Tp=(260*10^-9);
-it=600;
+Tp=(635*10^-9);
+it=400;
 fm=1/Tp;
-lambda=650*10^-9;
+lambda=635*10^-9;
 noise=randn(N).*sqrt(10^-4);
+wn=1;
+R1=3*10^-3;
+R2=1.8*10^-3;
+alpha1=0.001%0.0000002;
+beta1=0.0001;%0.00000001;
+alpha2=alpha1/1.1;
+beta2=beta1/2;
+cx1=0;
+cy1=0;
 wn=0;
+cx2=-R1/1.8;
+cy2=0*10^-3;
 k=(2*pi)/lambda;
 xm= (-M/2:M/2-1)*d1;
 ym= (-M/2:M/2-1)*d1;
@@ -43,17 +54,7 @@ saveas(gcf,"1.png");
 
 
 
-R1=3*10^-3;
-R2=1.8*10^-3;
-alpha1=0.001%0.0000002;
-beta1=0.00012;%0.00000001;
-alpha2=alpha1/1.1;
-beta2=beta1/2;
-cx1=0;
-cy1=0;
-wn=0;
-cx2=-R1/1.8;
-cy2=0*10^-3;
+
 L1= real(sqrt(R1^2-((Xm-cx1).^2 + (Ym-cy1).^2)));
 L2= real(sqrt(R2^2-((Xm-cx2).^2 + (Ym-cy2).^2)));
 phase1 = k*alpha1*L1/1.4;
@@ -212,7 +213,7 @@ BB=sqrt(I2B);
 %%GS algothm
 
 
-U1_est_abs = rand(N).*S;
+U1_est_abs=rand(N).*S;
 U1_est_phase= rand(N).*S;
 
 U1_est =U1_est_abs.*exp(1j.*U1_est_phase);
@@ -222,50 +223,29 @@ for i=1:it
 
  U1_est_A=U1_est.*MA;
  [U2_est_A,~]=FresProp(d1,z,lambda,N,U1_est_A);
-
-
  U2_est_A= AA.*exp(1j.*angle(U2_est_A));
  [U1_esti_A,~] = FresProp(d1,-z,lambda,N,U2_est_A);
- 
-
  U1_esti_A=U1_esti_A./MA;
-
  U1_esti_A(isnan(U1_esti_A))=0;
  U1_esti_A(isinf(U1_esti_A))=0;
  dd= U1_esti_A~=0;
  U1_est_abs = ((abs(U1_esti_A).*dd) + (imcomplement(dd).*(abs(U1_est)-(beta.*abs(U1_esti_A))))).*S;
- U1_est_abs=imgaussfilt(U1_est_abs,0.1);
-
- U1_est = U1_est_abs .*exp(1j.*(angle(U1_esti_A)+(0.00*rand(N)))).*S;
- 
+ U1_est_abs=imgaussfilt(U1_est_abs,1);
+ U1_est =U1_est_abs.*exp(1j.*(angle(U1_esti_A)+(0.00*rand(N)))).*S;% U1_est_abs .*exp(1j.*(angle(U1_esti_A)+(0.00*rand(N)))).*S;
  U1_est_B=U1_est.*MB;
  [U2_est_B,~]=FresProp(d1,z,lambda,N,U1_est_B);
-
- 
- 
  U2_est_B= BB.*exp(1j.*angle(U2_est_B));
- 
- 
  [U1_esti_B,~] = FresProp(d1,-z,lambda,N,U2_est_B);
- 
-
-%  
- 
  U1_esti_B=U1_esti_B./MB;
-
  U1_esti_B(isnan(U1_esti_B))=0;
  U1_esti_B(isinf(U1_esti_B))=0;
  dd= U1_esti_B~=0;
  U1_est_abs = ((abs(U1_esti_B).*dd) + (imcomplement(dd).*(abs(U1_est)-(beta.*abs(U1_esti_B))))).*S;
- 
-
-  U1_est_abs=imgaussfilt(U1_est_abs,0.1);
- U1_est = U1_est_abs.*exp(1j.*(angle(U1_esti_B)+(0.0*rand(N)))).*S;
- 
-  [Uee,Iee]=FresProp(d1,z,lambda,N,U1_est);
- 
-  err=((Iee - Iexp)./Iexp).^2;
-  error(i)= (sum(sum(err)*d1*d1));
+ U1_est_abs=imgaussfilt(U1_est_abs,1);
+ U1_est =U1_est_abs.*exp(1j.*(angle(U1_esti_B)+(0.0*rand(N)))).*S;% U1_est_abs.*exp(1j.*(angle(U1_esti_B)+(0.0*rand(N)))).*S;
+ [Uee,Iee]=FresProp(d1,z,lambda,N,U1_est);
+ err=((Iee - Iexp)./Iexp).^2;
+ error(i)= (sum(sum(err)*d1*d1));
 end
 
 figure
@@ -286,7 +266,7 @@ saveas(gcf,"12.png");
 
 
 figure
-imagesc(xn*10^3,yn*10^3,unwrap(angle(U1_est)));
+imagesc(xn*10^3,yn*10^3,(angle(U1_est)));
 xlabel("x(mm)");
 ylabel("y(mm)");
 colormap(jet)
